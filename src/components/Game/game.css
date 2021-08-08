@@ -1,0 +1,30 @@
+ol,
+ul {
+  padding-left: 30px;
+}
+
+.status {
+    margin-bottom: 10px;
+  }
+
+  .game {
+    display: flex;
+    flex-direction: row;
+  }
+  
+  .game-info {
+    margin-left: 20px;
+  }
+  .btn-list {
+    /* width: 100px;
+    font-size: 14px; */
+    margin-top: 10px;
+    /* box-shadow: none;
+    border: none;
+    cursor: pointer;
+    appearance: none;
+    background-color: #83BC93;
+    color: white; 
+    padding: 10px 5px;
+    border-radius: 4px; */
+  }
