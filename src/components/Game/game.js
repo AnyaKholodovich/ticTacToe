@@ -1,13 +1,26 @@
-import React, { useState } from "react";
+import React, { createContext } from 'react';
 import PropTypes from 'prop-types';
-import "./game.css";
-import Board from "../Board/Board";
+import { useDispatch, useSelector  } from 'react-redux';
+
+import './game.css';
+
+import { clearGameHistory, addNewGameStep, addGameWinner, addNextStep, addCurrentStepNumber, addFinish } from '../../redux/actions/gameActions';
+import Board from '../Board/Board';
+
+export const Context =  createContext();
 
 function Game() {
-    const [history, setHi] = useState([{ squares: Array(9).fill("") }]);
-    const [currentStepNumber, setCurrentStepNumber] = useState(0);
-    const [nextStep, setNextStep] = useState("X");
-    const [isFinish, setIsFinish] = useState(false);
+
+    const dispatch = useDispatch();
+    const gameState = useSelector(state => state.gameReducer);
+    // const { history, winCombination, nextStep, currentStepNumber, isFinish } = gameState;
+    const { history,  nextStep,  isFinish, currentStepNumber } = gameState;
+
+    // const [history, setHi] = useState([{ squares: Array(9).fill('') }]);
+    // const [currentStepNumber, setCurrentStepNumber] = useState(0);
+    // const [nextStep, setNextStep] = useState('X');
+    // const [isFinish, setIsFinish] = useState(false);
+    // const [winCombination, setWinCombination] = useState([]);
 
     const calculateWinner = squares => {
       const lines = [
@@ -27,6 +40,8 @@ function Game() {
         squares[a] === squares[b] &&
         squares[a] === squares[c]
       ) {
+        // setWinCombination(lines[i]);
+        dispatch(addGameWinner(lines[i]));
         return true;
       }
     }
@@ -36,20 +51,25 @@ function Game() {
   const clickSquare = (i) => {
     const currentSquaresCopy = [...history[history.length - 1].squares];
     let isFinishLocal;
-    if (currentSquaresCopy[i] === "" && !isFinish) {
+    if (currentSquaresCopy[i] === '' && !isFinish) {
       currentSquaresCopy[i] = nextStep;
       isFinishLocal = calculateWinner(currentSquaresCopy);
-      setHi(history.concat({ squares: currentSquaresCopy }));
-      setNextStep(isFinish ? nextStep : nextStep === "X" ? "0" : "X");
-      setCurrentStepNumber(history.length);
-      setIsFinish(isFinishLocal);
+      // setHi(history.concat({ squares: currentSquaresCopy }));
+      dispatch(addNewGameStep({squares: currentSquaresCopy}));
+      // setNextStep(isFinish ? nextStep : nextStep === 'X' ? '0' : 'X');
+      dispatch(addNextStep(isFinish ? nextStep : nextStep === 'X' ? '0' : 'X'));
+      
+      // setCurrentStepNumber(history.length);
+      dispatch(addCurrentStepNumber(history.length));
+      // setIsFinish(isFinishLocal);
+      dispatch(addFinish(isFinishLocal));
     }
   }
 
   const finishButton = () => {
     if (isFinish === true) {
       return (
-        <button className="finish-button" onClick={() => resetGame()}>
+        <button className='finish-button' onClick={() => resetGame()}>
           Обновить игру
         </button>
       );
@@ -57,14 +77,20 @@ function Game() {
   }
 
   const resetGame = () => {
-      setHi([{ squares: Array(9).fill("") }]);
-      setNextStep("X");
-      setCurrentStepNumber(0);
-      setIsFinish(false);
+      // setHi([{ squares: Array(9).fill('') }]);
+      dispatch(clearGameHistory());
+      // setNextStep('X');
+      dispatch(addNextStep('X'));
+      // setCurrentStepNumber(0);
+      dispatch(addCurrentStepNumber(0));
+      // setIsFinish(false);
+      dispatch(addFinish(false));
+      // setWinCombination([]);
   }
 
   const jumpTo = step => {
-    setCurrentStepNumber(step);
+    // setCurrentStepNumber(step);
+    dispatch(addCurrentStepNumber(step));
   }
 
   const showButtonsHistory = () => {
@@ -73,7 +99,9 @@ function Game() {
         return (
           <li key={index}>
             <button 
-            className="btn-list" 
+            className= {index === currentStepNumber
+              ? 'active'
+              : 'inactive'} 
             onClick={() => jumpTo(index)}>
               Перейти на ход {index + 1}
             </button>
@@ -83,36 +111,62 @@ function Game() {
       return console.log('bla');
     });
   }
+
+  // const showButtonsHistory = () => {
+	// 	return history.map((item, index) => {
+	// 		if (index > 0) {
+	// 			return (
+	// 				<li key={index}>
+	// 					<button
+	// 						className={
+	// 							index === currentStepNumber
+	// 								? "btn-active"
+	// 								: "btn-non-active"
+	// 						}
+	// 						onClick={() => jumpTo(index)}
+	// 					>
+	// 						Перейти на ход {index}
+	// 					</button>
+	// 				</li>
+	// 			);
+	// 		}
+	// 	});
+	// }
     let status;
 
     if (isFinish) {
-      status = "Игра закончилась. Выйграли " + nextStep;
+      status = 'Игра закончилась. Выйграли ' + nextStep;
     } else {
-      status = "Следующий ход за: " + nextStep;
+      status = 'Следующий ход за: ' + nextStep;
     }
 
-    const currentSquares = history[currentStepNumber].squares;
+
+    const contextValues = { clickSquare };
 
     return (
-      <div className="game">
-        <div className="game-board">
-          <div className="status">{status}</div>
-          <Board
-            squares={currentSquares}
-            history={history}
-            nextStep={nextStep}
-            isFinish={isFinish}
-            handleClickSquare={clickSquare}
-          />
-          <div className="game-info">
-            <div>{/* status */}</div>
-            <ul>
-              <li>{showButtonsHistory()}</li>
-            </ul>
-            <div>{finishButton()}</div>
+      <Context.Provider value = { contextValues }>
+        <div className='game'>
+        <div className='status'>{status}</div>
+          <div className='game-board'>
+            
+            <Board
+              // currentStepNumber = {currentStepNumber}
+              // winCombination={winCombination}
+              // squares={currentSquares}
+              // history={history}
+              // nextStep={nextStep}
+              // isFinish={isFinish}
+            />
+            <div className='game-info'>
+              <div>{/* status */}</div>
+              <ul>
+                <li>{showButtonsHistory()}</li>
+              </ul>
+              <div>{finishButton()}</div>
+            </div>
           </div>
         </div>
-      </div>
+      </Context.Provider>
     );
 }
 
